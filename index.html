@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Retro Space Shooter</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <div class="score-container">
+    <span>HI <span id="highScoreEl">0</span> <span id="scoreEl">0</span></span>
+  </div>
+
+  <!-- SOUND ON/OFF BUTTON   -->
+  <div style="position: absolute; top: 0; right: 0; padding: 8px">
+    <svg id="volumeUpEl" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="#00ff00"
+      stroke-width="2" style="width: 20px; height: 20px; cursor: pointer">
+      <path stroke-linecap="round" stroke-linejoin="round"
+        d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+    </svg>
+    <svg id="volumeOffEl" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="#00ff00"
+      stroke-width="2" style="width: 20px; height: 20px; cursor: pointer; display: none">
+      <path stroke-linecap="round" stroke-linejoin="round"
+        d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+      <path stroke-linecap="round" stroke-linejoin="round" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
+    </svg>
+  </div>
+
+  <div id="modalEl" class="modal">
+    <label>Game Over</label>
+    <h1 id="modalScoreEl">0</h1>
+    <p style="margin: 0; font-size: 14px; color: #00aa00">Points</p>
+    <button id="buttonEl">
+      Restart Game
+    </button>
+  </div>
+
+  <div id="startModalEl" class="modal" style="display: block">
+    <h1>Retro Space Defence</h1>
+    <button id="startButtonEl">
+      Start Game
+    </button>
+  </div>
+
+  <canvas></canvas>
+
+  <script src="https://cdn.jsdelivr.net/npm/howler@2.2.4/dist/howler.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+  <script type="module" src="main.js"></script>
+</body>
+
+</html>

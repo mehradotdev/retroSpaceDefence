@@ -1,0 +1,128 @@
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+:root {
+  font-family: 'Press Start 2P', system-ui;
+  line-height: 1.5;
+  font-weight: 400;
+  color-scheme: dark;
+  color: rgba(0, 255, 0, 0.87);
+  background-color: #000000;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: none;
+  -moz-osx-font-smoothing: grayscale;
+  image-rendering: pixelated;
+}
+
+canvas {
+  image-rendering: pixelated;
+}
+
+a {
+  font-weight: 500;
+  color: #00ff00;
+  text-decoration: inherit;
+}
+
+a:hover {
+  color: #00dd00;
+}
+
+body {
+  margin: 0;
+  display: flex;
+  place-items: center;
+  min-width: 320px;
+  min-height: 100vh;
+  background: linear-gradient(to bottom, #000000 0%, #050810 100%);
+  overflow: hidden;
+}
+
+h1 {
+  font-size: 2em;
+  line-height: 1.1;
+  text-shadow: 2px 2px #003300;
+}
+
+#app {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
+}
+
+.score-container {
+  top: 0;
+  position: absolute;
+  color: #00ff00;
+  padding: 8px;
+  font-size: 14px;
+  user-select: none;
+  text-shadow: 2px 2px #003300;
+  border: 2px solid #00ff00;
+  background: rgba(0, 0, 0, 0.3);
+  box-shadow: 0 0 20px #00ff00;
+}
+
+button {
+  border-radius: 0;
+  border: 2px solid #00ff00;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  background-color: #000000;
+  color: #00ff00;
+  cursor: pointer;
+  transition: border-color 0.25s;
+  text-transform: uppercase;
+  text-shadow: 2px 2px #003300;
+  box-shadow: 4px 4px #003300;
+}
+
+button:hover {
+  border-color: #00dd00;
+  background-color: #003300;
+}
+
+button:active {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px #003300;
+}
+
+.modal {
+  display: none;
+  position: absolute;
+  background-color: #000000;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  left: 50%;
+  padding: 16px;
+  max-width: 500px;
+  width: 100%;
+  text-align: center;
+  border: 2px solid #00ff00;
+  box-shadow: 0 0 20px #00ff00;
+  color: #00ff00;
+  user-select: none;
+}
+
+.modal h1 {
+  color: #00ff00;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.modal label {
+  color: #00aa00;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    color: #00ff00;
+    background-color: #000000;
+  }
+  button {
+    background-color: #000000;
+  }
+}
