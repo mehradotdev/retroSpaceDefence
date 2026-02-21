@@ -10,6 +10,7 @@ export class Player {
       x: 0,
       y: 0
     }
+    this.rotation = -Math.PI / 2 // Pointing upward (negative Y is up in canvas)
     this.powerUp
   }
 
@@ -18,37 +19,20 @@ export class Player {
     c.shadowBlur = 20 // Adjust for more or less glow
     c.shadowColor = this.color
 
-    // c.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false)
+    c.save()
+    c.translate(this.x, this.y)
+    c.rotate(this.rotation)
 
-    const pixelSize = 4 // Size of each pixel block
-    for (let y = -this.radius; y <= this.radius; y += pixelSize) {
-      for (let x = -this.radius; x <= this.radius; x += pixelSize) {
-        const distance = Math.sqrt(x * x + y * y)
-        if (distance <= this.radius) {
-          c.fillStyle = this.color
-          c.fillRect(this.x + x, this.y + y, pixelSize, pixelSize)
-        }
-      }
-    }
-
-    // // Jagged circle
-    // c.beginPath();
-    // const spikes = 20; // Number of jagged points
-    // const jaggedness = 0.4; // Adjust for more or less jaggedness
-    // for (let i = 0; i < spikes; i++) {
-    //   const angle = (i / spikes) * Math.PI * 2;
-    //   const distance =
-    //     this.radius + Math.random() * this.radius * jaggedness;
-    //   const x = this.x + Math.cos(angle) * distance;
-    //   const y = this.y + Math.sin(angle) * distance;
-    //   if (i === 0) c.moveTo(x, y);
-    //   else c.lineTo(x, y);
-    // }
-    // c.closePath();
-
-    // Fill with color
+    // Draw triangle ship pointing right (along positive X)
+    c.beginPath()
+    c.moveTo(this.radius * 1.5, 0) // Tip pointing right
+    c.lineTo(-this.radius, -this.radius) // Top left
+    c.lineTo(-this.radius, this.radius) // Bottom left
+    c.closePath()
     c.fillStyle = this.color
     c.fill()
+
+    c.restore()
 
     // Reset shadow
     c.shadowBlur = 0
@@ -57,27 +41,20 @@ export class Player {
   update(c) {
     this.draw(c)
 
-    const friction = 0.99
+    this.x += this.velocity.x
+    this.y += this.velocity.y
 
-    this.velocity.x *= friction
-    this.velocity.y *= friction
+    // Screen wrapping - reappear on opposite side
+    if (this.x < 0) this.x = canvas.width
+    if (this.x > canvas.width) this.x = 0
+    if (this.y < 0) this.y = canvas.height
+    if (this.y > canvas.height) this.y = 0
+  }
 
-    if (
-      this.x + this.radius + this.velocity.x <= canvas.width &&
-      this.x - this.radius + this.velocity.x >= 0
-    ) {
-      this.x += this.velocity.x
-    } else {
-      this.velocity.x = 0
-    }
-
-    if (
-      this.y + this.radius + this.velocity.y <= canvas.height &&
-      this.y - this.radius + this.velocity.y >= 0
-    ) {
-      this.y += this.velocity.y
-    } else {
-      this.velocity.y = 0
+  getTipPosition() {
+    return {
+      x: this.x + Math.cos(this.rotation) * this.radius * 1.5,
+      y: this.y + Math.sin(this.rotation) * this.radius * 1.5
     }
   }
 }
@@ -106,7 +83,7 @@ export class Projectile {
 }
 
 export class Enemy {
-  constructor(x, y, radius, color, velocity) {
+  constructor(x, y, radius, color, velocity, typeChances = null) {
     this.x = x
     this.y = y
     this.radius = radius
@@ -119,14 +96,29 @@ export class Enemy {
       y
     }
 
-    if (Math.random() < 0.5) {
-      this.type = 'Homing'
-
-      if (Math.random() < 0.5) {
+    // Determine enemy type based on difficulty-based chances
+    if (typeChances) {
+      const rand = Math.random()
+      if (rand < typeChances.Linear) {
+        this.type = 'Linear'
+      } else if (rand < typeChances.Linear + typeChances.Homing) {
+        this.type = 'Homing'
+      } else if (rand < typeChances.Linear + typeChances.Homing + typeChances.Spinning) {
         this.type = 'Spinning'
+      } else {
+        this.type = 'Homing Spinning'
+      }
+    } else {
+      // Fallback to original random logic
+      if (Math.random() < 0.5) {
+        this.type = 'Homing'
 
         if (Math.random() < 0.5) {
-          this.type = 'Homing Spinning'
+          this.type = 'Spinning'
+
+          if (Math.random() < 0.5) {
+            this.type = 'Homing Spinning'
+          }
         }
       }
     }
