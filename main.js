@@ -77,7 +77,85 @@ function init() {
   }
 }
 
+/**
+ * Determines game difficulty parameters based on current player score.
+ * The difficulty progresses through 5 stages:
+ * 
+ * Stage 1 (0-5000 pts): Beginner - Easy introduction
+ *   - Spawn rate: 1500ms (slower spawning)
+ *   - Speed: 0.5x (half normal speed)
+ *   - Enemy types: Linear only (no tracking/projectile enemies)
+ * 
+ * Stage 2 (5000-10000 pts): Intermediate - First challenge
+ *   - Spawn rate: 1200ms
+ *   - Speed: 0.75x
+ *   - Enemy types: 60% Linear, 40% Homing (tracking enemies appear)
+ * 
+ * Stage 3 (10000-20000 pts): Advanced - Full variety
+ *   - Spawn rate: 1000ms (original spawn rate)
+ *   - Speed: 1.0x (normal speed)
+ *   - Enemy types: 50% Linear, 30% Homing, 20% Spinning
+ * 
+ * Stage 4 (20000-50000 pts): Expert - Intensified
+ *   - Spawn rate: 800ms (faster spawning)
+ *   - Speed: 1.2x (above normal)
+ *   - Enemy types: All types available including Homing-Spinning combo (10%)
+ * 
+ * Stage 5 (50000+ pts): Master - Maximum challenge
+ *   - Spawn rate: 600ms (maximum spawn rate)
+ *   - Speed: 1.5x (50% faster)
+ *   - Enemy types: More aggressive mix with fewer Linear enemies
+ * 
+ * @param {number} score - Current player score
+ * @returns {Object} Configuration object with spawnRate, speedMultiplier, and typeChances
+ */
+function getDifficultyConfig(score) {
+  if (score < 5000) {
+    // Stage 1: Beginner
+    return {
+      spawnRate: 1500,
+      speedMultiplier: 0.5,
+      allowedTypes: ['Linear'],
+      typeChances: { Linear: 1.0, Homing: 0, Spinning: 0, HomingSpinning: 0 }
+    }
+  } else if (score < 10000) {
+    // Stage 2: Intermediate
+    return {
+      spawnRate: 1200,
+      speedMultiplier: 0.75,
+      allowedTypes: ['Linear', 'Homing'],
+      typeChances: { Linear: 0.6, Homing: 0.4, Spinning: 0, HomingSpinning: 0 }
+    }
+  } else if (score < 20000) {
+    // Stage 3: Advanced
+    return {
+      spawnRate: 1000,
+      speedMultiplier: 1.0,
+      allowedTypes: ['Linear', 'Homing', 'Spinning'],
+      typeChances: { Linear: 0.5, Homing: 0.3, Spinning: 0.2, HomingSpinning: 0 }
+    }
+  } else if (score < 50000) {
+    // Stage 4: Expert
+    return {
+      spawnRate: 800,
+      speedMultiplier: 1.2,
+      allowedTypes: ['Linear', 'Homing', 'Spinning', 'HomingSpinning'],
+      typeChances: { Linear: 0.4, Homing: 0.3, Spinning: 0.2, HomingSpinning: 0.1 }
+    }
+  } else {
+    // Stage 5: Master
+    return {
+      spawnRate: 600,
+      speedMultiplier: 1.5,
+      allowedTypes: ['Linear', 'Homing', 'Spinning', 'HomingSpinning'],
+      typeChances: { Linear: 0.3, Homing: 0.35, Spinning: 0.25, HomingSpinning: 0.1 }
+    }
+  }
+}
+
 function spawnEnemies() {
+  const config = getDifficultyConfig(score)
+  
   intervalId = setInterval(() => {
     const radius = Math.random() * (30 - 4) + 4
     let x
@@ -93,10 +171,13 @@ function spawnEnemies() {
 
     const color = `hsl(${Math.random() * 360}, 50%, 50%)`
     const angle = Math.atan2(canvas.height / 2 - y, canvas.width / 2 - x)
-    const velocity = { x: Math.cos(angle), y: Math.sin(angle) }
+    const velocity = {
+      x: Math.cos(angle) * config.speedMultiplier,
+      y: Math.sin(angle) * config.speedMultiplier
+    }
 
-    enemies.push(new Enemy(x, y, radius, color, velocity))
-  }, 1000)
+    enemies.push(new Enemy(x, y, radius, color, velocity, config.typeChances))
+  }, config.spawnRate)
 }
 
 function spawnPowerUps() {
@@ -190,18 +271,15 @@ function animate() {
 
   // machine gun animation / implementation
   if (player.powerUp === 'MachineGun') {
-    const angle = Math.atan2(
-      mouse.position.y - player.y,
-      mouse.position.x - player.x
-    )
     const velocity = {
-      x: Math.cos(angle) * 5,
-      y: Math.sin(angle) * 5
+      x: Math.cos(player.rotation) * 5,
+      y: Math.sin(player.rotation) * 5
     }
 
     if (frames % 2 === 0) {
+      const tip = player.getTipPosition()
       projectiles.push(
-        new Projectile(player.x, player.y, 5, 'yellow', velocity)
+        new Projectile(tip.x, tip.y, 5, 'yellow', velocity)
       )
     }
 
@@ -350,14 +428,14 @@ function animate() {
 
 let audioInitialized = false
 
-function shoot({ x, y }) {
+function shoot() {
   if (game.active) {
-    const angle = Math.atan2(y - player.y, x - player.x)
+    const tip = player.getTipPosition()
     const velocity = {
-      x: Math.cos(angle) * 5,
-      y: Math.sin(angle) * 5
+      x: Math.cos(player.rotation) * 5,
+      y: Math.sin(player.rotation) * 5
     }
-    projectiles.push(new Projectile(player.x, player.y, 5, 'white', velocity))
+    projectiles.push(new Projectile(tip.x, tip.y, 5, 'white', velocity))
 
     audio.shoot.play()
   }
@@ -368,29 +446,17 @@ window.addEventListener('click', (event) => {
     audio.background.play()
     audioInitialized = true
   }
-
-  shoot({ x: event.clientX, y: event.clientY })
 })
 
 window.addEventListener('touchstart', (event) => {
-  const x = event.touches[0].clientX
-  const y = event.touches[0].clientY
+  if (!audio.background.playing() && !audioInitialized) {
+    audio.background.play()
+    audioInitialized = true
+  }
 
-  mouse.position.x = event.touches[0].clientX
-  mouse.position.y = event.touches[0].clientY
-
-  shoot({ x, y })
-})
-
-const mouse = { position: { x: 0, y: 0 } }
-window.addEventListener('mousemove', (event) => {
-  mouse.position.x = event.clientX
-  mouse.position.y = event.clientY
-})
-
-window.addEventListener('touchmove', (event) => {
-  mouse.position.x = event.touches[0].clientX
-  mouse.position.y = event.touches[0].clientY
+  if (game.active) {
+    shoot()
+  }
 })
 
 // restart game
@@ -492,6 +558,11 @@ const keysPressed = {} // Object to track keys being pressed
 // Listen for keydown events and mark keys as pressed
 window.addEventListener('keydown', (event) => {
   keysPressed[event.key] = true
+
+  // Spacebar to shoot
+  if (event.key === ' ' && game.active) {
+    shoot()
+  }
 })
 
 // Listen for keyup events and mark keys as not pressed
@@ -501,8 +572,27 @@ window.addEventListener('keyup', (event) => {
 
 // Update player movement based on the keys pressed
 function updatePlayerMovement() {
-  if (keysPressed['w']) player.y -= 5
-  if (keysPressed['a']) player.x -= 5
-  if (keysPressed['s']) player.y += 5
-  if (keysPressed['d']) player.x += 5
+  const rotationSpeed = 0.08
+  const thrust = 0.15
+  const brake = 0.96
+
+  // Rotation
+  if (keysPressed['ArrowLeft']) {
+    player.rotation -= rotationSpeed
+  }
+  if (keysPressed['ArrowRight']) {
+    player.rotation += rotationSpeed
+  }
+
+  // Thrust - accelerate in direction of rotation
+  if (keysPressed['ArrowUp']) {
+    player.velocity.x += Math.cos(player.rotation) * thrust
+    player.velocity.y += Math.sin(player.rotation) * thrust
+  }
+
+  // Brake - slow down
+  if (keysPressed['ArrowDown']) {
+    player.velocity.x *= brake
+    player.velocity.y *= brake
+  }
 }
